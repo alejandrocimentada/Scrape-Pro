@@ -1,0 +1,38 @@
+# Publishes a release with scrape-pro.zip whenever a version tag (v1.3.0, …) is pushed.
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check that the tag matches manifest.json
+        run: |
+          version="$(jq -r .version selector-scout/manifest.json)"
+          if [ "$GITHUB_REF_NAME" != "v$version" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME does not match manifest.json version $version"
+            exit 1
+          fi
+
+      - name: Zip the extension (manifest.json at the top level)
+        run: |
+          cd selector-scout
+          zip -r -X ../scrape-pro.zip . -x '.*'
+          cd ..
+          unzip -l scrape-pro.zip
+
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" scrape-pro.zip \
+            --title "Scrape Pro $GITHUB_REF_NAME" \
+            --notes "Download **scrape-pro.zip** below and follow the [install guide](https://github.com/${GITHUB_REPOSITORY}/blob/main/INSTALL.md) (about 3 minutes)."
