@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scrape Pro · Turn any website into a spreadsheet</title>
+  <meta name="description" content="A free Chrome extension: point at any website's data or just ask for it, and Scrape Pro turns it into a clean table for Excel, JSON, or a ready-to-run Python scraper.">
+  <link rel="icon" type="image/png" href="icon32.png">
+  <style>
+    :root {
+      --bg: #0B0D12; --panel: #11131A; --panel-2: #151823; --line: rgba(255,255,255,.08);
+      --text: #E6E8EE; --muted: #9AA0AE; --faint: #6B7180;
+      --violet: #7C5CFF; --violet-2: #A78BFA; --green: #22C55E;
+      --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; }
+    body { display: flex; flex-direction: column; min-height: 100vh; overflow-x: hidden;
+      background: var(--bg); color: var(--text); font: 14px/1.6 var(--sans); -webkit-font-smoothing: antialiased; }
+    /* One screen, no scrolling, on desktop. Phones and short screens can scroll. */
+    @media (min-width: 900px) and (min-height: 660px) { body { height: 100vh; overflow: hidden; } }
+    a { color: inherit; text-decoration: none; }
+
+    /* ── background: faint data grid + violet glow ── */
+    body::before { content: ""; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background-image: linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px),
+                        linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px);
+      background-size: 44px 44px;
+      -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 0%, #000 20%, transparent 75%);
+              mask-image: radial-gradient(ellipse 70% 60% at 50% 0%, #000 20%, transparent 75%); }
+    body::after { content: ""; position: fixed; left: 50%; top: -30vh; width: 1100px; height: 70vh; z-index: 0;
+      transform: translateX(-50%); pointer-events: none;
+      background: radial-gradient(closest-side, rgba(124,92,255,.22), transparent); }
+    body > * { position: relative; z-index: 1; }
+
+    /* ── nav ── */
+    .nav { display: flex; align-items: center; justify-content: space-between; width: min(1160px, 100%); margin: 0 auto; padding: 18px 24px; }
+    .brand { display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 650; }
+    .brand img { width: 26px; height: 26px; }
+    .links { display: flex; align-items: center; gap: 22px; font-size: 13px; color: var(--muted); }
+    .lang { display: inline-flex; padding: 2px; border-radius: 8px; background: rgba(255,255,255,.04); border: 1px solid var(--line); }
+    .lang button { padding: 3px 8px; border: 0; border-radius: 6px; background: none; color: var(--muted); font: 600 11px var(--mono); cursor: pointer; }
+    .lang button:hover { color: var(--text); }
+    .lang button[aria-pressed="true"] { background: rgba(124,92,255,.24); color: var(--text); }
+    .lang button:focus-visible { outline: 2px solid var(--violet); outline-offset: 1px; }
+    .links a { display: inline-flex; align-items: center; gap: 6px; transition: color .15s; }
+    .links a:hover { color: var(--text); }
+    .links svg { width: 16px; height: 16px; }
+
+    /* ── hero ── */
+    .hero { padding: 1vh 24px 0; text-align: center; }
+    h1 { margin: 1.4vh auto 1.4vh; max-width: 900px; font-size: clamp(28px, min(4.2vw, 6vh), 52px);
+      line-height: 1.04; letter-spacing: -.035em; font-weight: 700; }
+    .grad { background: linear-gradient(120deg, #C4B5FD, var(--violet) 60%, #8B7BFF);
+      -webkit-background-clip: text; background-clip: text; color: transparent; }
+    .lead { max-width: 580px; margin: 0 auto; color: var(--muted); font-size: clamp(13px, 1.7vh, 15px); }
+    .cta { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-top: 2.8vh; }
+    .btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 10px;
+      font-size: 13px; font-weight: 650; transition: transform .15s, background .15s, box-shadow .15s; }
+    .btn svg { width: 15px; height: 15px; }
+    .btn-light { background: #F4F4F6; color: #0B0D12; box-shadow: 0 10px 30px -12px rgba(124,92,255,.6); }
+    .btn-light:hover { background: #fff; transform: translateY(-1px); }
+    .btn-dark { background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.12); }
+    .btn-dark:hover { background: rgba(255,255,255,.09); }
+    .fine { margin: 1.6vh 0 0; font-size: 11px; color: var(--faint); }
+    .fine a { text-decoration: underline; text-underline-offset: 2px; }
+    .fine a:hover { color: var(--muted); }
+    .rise { animation: rise .6s ease-out both; }
+    .d1 { animation-delay: .08s; } .d2 { animation-delay: .16s; } .d3 { animation-delay: .24s; } .d4 { animation-delay: .32s; }
+    @keyframes rise { from { opacity: 0; transform: translateY(14px); } }
+
+    /* ── interactive product preview: a mock browser, cropped at the bottom ── */
+    .stage { position: relative; flex: 1; min-height: 300px; display: flex; flex-direction: column; margin-top: 2.6vh;
+      animation: rise .8s .3s ease-out both; }
+    @media (max-width: 899px), (max-height: 659px) { .stage { flex: none; height: 600px; } }
+    .demo-caption { margin: 0 auto 10px; padding: 0 16px; font-size: 11px; color: var(--faint); text-align: center; }
+    .demo-reset { padding: 0; border: 0; background: none; color: var(--muted); font: inherit; cursor: pointer;
+      text-decoration: underline; text-underline-offset: 2px; }
+    .demo-reset:hover { color: var(--text); }
+    .frame { position: relative; flex: 1; min-height: 0; }
+    .window { position: absolute; top: 0; bottom: 0; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column;
+      width: min(1060px, calc(100vw - 32px)); overflow: hidden; border-radius: 16px 16px 0 0;
+      background: var(--panel); border: 1px solid rgba(255,255,255,.1); border-bottom: 0; box-shadow: 0 -20px 80px -30px rgba(124,92,255,.45); }
+
+    /* browser chrome: tab strip + toolbar */
+    .tabstrip { flex: none; height: 36px; display: flex; align-items: flex-end; gap: 14px; padding: 0 12px 0 14px; background: #0B0D12; }
+    .dots { flex: none; display: flex; gap: 6px; align-self: center; }
+    .dots i { width: 10px; height: 10px; border-radius: 50%; background: #2A2E3A; }
+    .tabs { display: flex; gap: 4px; min-width: 0; }
+    .tab { display: flex; align-items: center; gap: 7px; min-width: 0; max-width: 240px; height: 30px; padding: 0 12px; border: 0;
+      border-radius: 8px 8px 0 0; background: transparent; color: var(--faint); font: 11px var(--mono); white-space: nowrap; cursor: pointer; }
+    .tab:hover { color: var(--muted); background: rgba(255,255,255,.03); }
+    .tab.active { background: #0E1016; color: var(--text); }
+    .tab span { overflow: hidden; text-overflow: ellipsis; }
+    .tab img { flex: none; width: 12px; height: 12px; }
+    .tab .fav { flex: none; width: 10px; height: 10px; border-radius: 3px; background: linear-gradient(135deg, #FDE68A, #FCA5A5); }
+    .toolbar { flex: none; height: 40px; display: flex; align-items: center; gap: 10px; padding: 0 8px 0 14px;
+      background: #0E1016; border-bottom: 1px solid var(--line); }
+    .url { flex: 1; max-width: 460px; min-width: 0; height: 26px; display: flex; align-items: center; padding: 0 12px; border-radius: 8px;
+      background: #161923; color: var(--muted); font: 12px var(--mono); white-space: nowrap; overflow: hidden; }
+    .url b { font-weight: 400; color: var(--text); }
+    .ext { position: relative; flex: none; width: 32px; height: 32px; display: grid; place-items: center; margin-left: auto; padding: 0;
+      border: 0; border-radius: 8px; background: transparent; cursor: pointer; }
+    .ext:hover { background: rgba(255,255,255,.07); }
+    .ext:focus-visible, .tab:focus-visible, .demo-reset:focus-visible { outline: 2px solid var(--violet); outline-offset: 1px; }
+    .ext img { width: 20px; height: 20px; filter: grayscale(1) brightness(.8); transition: filter .15s; }
+    .ext.on img { filter: none; }
+    .ext:disabled { opacity: .4; cursor: not-allowed; }
+    .ext .badge { position: absolute; right: -1px; bottom: 1px; padding: 0 3px; border-radius: 4px; background: var(--green); color: #fff;
+      font: 700 8px/12px var(--sans); }
+
+    /* the mock supermarket page */
+    .viewport { position: relative; flex: 1; min-height: 0; }
+    .page, .results { position: absolute; inset: 0; overflow: auto; overscroll-behavior: contain; }
+    .page { background: #F6F6F8; color: #1F2230; }
+    .page.picking .shop, .page.picking .shop * { cursor: crosshair; }
+    .shop { padding: 14px 16px 18px; }
+    .shop-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+    .shop-head h2 { margin: 0; font-size: 15px; letter-spacing: -.01em; }
+    .shop-head p { margin: 0; font-size: 11px; color: #6B7080; }
+    .grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+    @media (max-width: 900px) { .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+    @media (max-width: 600px) { .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; } }
+    .product { display: flex; flex-direction: column; gap: 2px; padding: 10px; border-radius: 12px; background: #fff; color: #1F2230;
+      border: 1px solid #E7E7EC; box-shadow: 0 6px 16px -12px rgba(0,0,0,.25); outline: none; }
+    .product:focus-visible { box-shadow: 0 0 0 3px rgba(124,92,255,.45); }
+    .product .img { height: 56px; margin-bottom: 6px; border-radius: 8px; }
+    .product .name { font-size: 12.5px; font-weight: 600; line-height: 1.3; }
+    .product .size { font-size: 11px; color: #6B7080; }
+    .product .price { margin-top: 3px; font: 700 12.5px var(--mono); }
+    .product .stock { font-size: 10.5px; font-weight: 600; color: #15803D; }
+    .product .stock.out { color: #B91C1C; }
+    .g1 { background: linear-gradient(135deg, #FDE68A, #FCA5A5); } .g2 { background: linear-gradient(135deg, #BBF7D0, #86EFAC); }
+    .g3 { background: linear-gradient(135deg, #BFDBFE, #A5B4FC); } .g4 { background: linear-gradient(135deg, #FBCFE8, #F9A8D4); }
+    .g5 { background: linear-gradient(135deg, #DDD6FE, #C4B5FD); } .g6 { background: linear-gradient(135deg, #FED7AA, #FDBA74); }
+    .g7 { background: linear-gradient(135deg, #A7F3D0, #6EE7B7); } .g8 { background: linear-gradient(135deg, #E9D5FF, #D8B4FE); }
+
+    /* picker outlines (same colors as the extension) */
+    .pick-box { position: absolute; z-index: 5; display: none; border-radius: 6px; pointer-events: none; }
+    .pick-box.show { display: block; }
+    .pick-box.hover { border: 2px solid var(--violet); background: rgba(124,92,255,.08); box-shadow: 0 0 0 3px rgba(124,92,255,.16); }
+    .pick-box.hover.adding { border-style: dashed; }
+    .pick-box.selected { border: 2px solid var(--green); background: rgba(34,197,94,.08); box-shadow: 0 0 0 3px rgba(34,197,94,.16); }
+    .pick-box.sweep { display: block; border: 2px solid var(--violet-2); background: rgba(167,139,250,.16); animation: sweep .45s ease-out forwards; }
+    @keyframes sweep { 60% { opacity: 1; } to { opacity: 0; } }
+    .pick-tag { position: absolute; left: -2px; bottom: calc(100% + 4px); padding: 2px 7px; border-radius: 6px; background: var(--violet);
+      color: #fff; font: 600 10px/1.5 var(--mono); white-space: nowrap; }
+    .pick-tag.inside { bottom: auto; top: 3px; left: 3px; }
+
+    /* the Scrape Pro card (matches the extension) */
+    .sp-card { position: absolute; z-index: 10; width: 290px; max-width: calc(100% - 16px); padding: 12px; border-radius: 14px;
+      overflow: auto; overscroll-behavior: contain;
+      background: rgba(17,19,26,.97); color: var(--text); border: 1px solid rgba(255,255,255,.08); cursor: auto;
+      box-shadow: 0 24px 60px rgba(0,0,0,.35), 0 0 0 1px rgba(124,92,255,.25); font: 12px/1.45 var(--sans); animation: card-in .14s ease-out; }
+    @keyframes card-in { from { opacity: 0; transform: translateY(6px) scale(.98); } }
+    .sp-head { display: flex; align-items: center; gap: 7px; margin-bottom: 10px; }
+    .sp-head b { flex: 1; font-size: 12.5px; }
+    .chip { padding: 4px 6px; border-radius: 6px; font: 600 10.5px/1 var(--mono); color: #C4B5FD; background: rgba(124,92,255,.16); }
+    .lnk, .x { border: 0; background: none; border-radius: 6px; cursor: pointer; }
+    .lnk { padding: 3px 6px; color: var(--violet-2); font: 600 11px var(--sans); }
+    .lnk:hover { background: rgba(124,92,255,.14); }
+    .x { width: 22px; height: 22px; color: var(--muted); font-size: 12px; }
+    .x:hover { background: rgba(255,255,255,.08); color: #fff; }
+    .sp-row-head { display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 10px; letter-spacing: .06em;
+      text-transform: uppercase; color: var(--muted); }
+    .sp-row-head .ok { color: #4ADE80; } .sp-row-head .warn { color: #FBBF24; }
+    .sp-row { display: flex; gap: 6px; margin-bottom: 10px; }
+    .sp-row code { flex: 1; min-width: 0; padding: 6px 8px; border-radius: 8px; background: #0B0D12; border: 1px solid rgba(255,255,255,.06);
+      font: 11px/1.5 var(--mono); white-space: nowrap; overflow-x: auto; }
+    .sp-sec { padding-top: 10px; border-top: 1px solid rgba(255,255,255,.08); }
+    .sp-sec + .sp-sec { margin-top: 10px; }
+    .sp-label { margin-bottom: 6px; font-size: 10px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+    .sp-input { width: 100%; height: 32px; padding: 0 10px; border-radius: 8px; background: #0B0D12; color: var(--text);
+      border: 1px solid rgba(255,255,255,.12); font: 12px var(--sans); }
+    .sp-input:focus { outline: 2px solid rgba(124,92,255,.5); border-color: var(--violet); }
+    .sp-btn { min-height: 30px; padding: 0 10px; border: 0; border-radius: 8px; background: rgba(255,255,255,.08); color: var(--text);
+      font: 600 11.5px var(--sans); cursor: pointer; }
+    .sp-btn:hover { background: rgba(255,255,255,.14); }
+    .sp-btn.done { background: rgba(34,197,94,.2); color: #4ADE80; }
+    .sp-btn.primary { width: 100%; margin-top: 6px; color: #fff; background: linear-gradient(135deg, #7C5CFF, #A78BFA); }
+    .sp-btn.primary:disabled { opacity: .75; cursor: progress; }
+    .sp-btn.alt { width: 100%; background: rgba(124,92,255,.16); color: #C4B5FD; }
+    .sp-btn.alt[aria-disabled="true"] { opacity: .5; cursor: not-allowed; }
+    .sp-hint { margin: -4px 0 10px; font-size: 11px; color: var(--muted); }
+    .sp-btn.small { min-height: 26px; padding: 0 9px; font-size: 11px; }
+    .sp-btn.on { background: rgba(34,197,94,.2); color: #4ADE80; }
+    .sp-msg { padding-top: 7px; font-size: 11.5px; color: #4ADE80; }
+    .sp-msg.err { color: #FCA5A5; }
+
+    /* the results tab (matches the extension's results page) */
+    .results { padding: 14px 18px 20px; background: var(--bg); color: var(--text); }
+    .r-top { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+    .r-kicker { margin: 0; font: 600 10px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--violet-2); }
+    .r-back { padding: 0; border: 0; background: none; color: var(--muted); font: 12px var(--sans); cursor: pointer; }
+    .r-back:hover { color: var(--text); }
+    .results h3 { margin: 3px 0 0; font-size: 17px; letter-spacing: -.01em; }
+    .r-request { margin: 8px 0 0; padding: 5px 10px; border-left: 2px solid var(--violet); border-radius: 0 8px 8px 0;
+      background: rgba(124,92,255,.08); color: #C9CDD6; font-size: 12px; }
+    .r-note { margin: 8px 0 0; padding: 6px 10px; border-radius: 8px; background: rgba(251,191,36,.08); border: 1px solid rgba(251,191,36,.25);
+      color: #FCD34D; font-size: 11.5px; }
+    .r-tools { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 12px 0 8px; }
+    .r-filter { flex: 1; min-width: 140px; height: 30px; padding: 0 10px; border-radius: 8px; background: var(--panel); color: var(--text);
+      border: 1px solid var(--line); font: 12px var(--sans); }
+    .r-btn { height: 30px; padding: 0 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); color: var(--text);
+      font: 600 11.5px var(--sans); white-space: nowrap; cursor: pointer; }
+    .r-btn:hover { background: #1A1D27; }
+    .r-btn.primary { border: 0; color: #fff; background: linear-gradient(135deg, #7C5CFF, #A78BFA); }
+    .r-btn.done { color: #4ADE80; }
+    .r-count { margin-bottom: 6px; color: var(--faint); font-size: 11px; }
+    .r-table { overflow: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); }
+    .r-table table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 12px; }
+    .r-table th { position: sticky; top: 0; padding: 0; text-align: left; background: var(--panel-2); border-bottom: 1px solid var(--line); }
+    .r-table th button { width: 100%; padding: 7px 12px; border: 0; background: none; color: var(--muted); text-align: left; white-space: nowrap;
+      font: 600 10px var(--mono); letter-spacing: .04em; text-transform: uppercase; cursor: pointer; }
+    .r-table th button:hover { color: var(--text); }
+    .r-table .dir { margin-left: 4px; color: var(--violet-2); }
+    .r-table td { max-width: 260px; padding: 7px 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+      border-bottom: 1px solid rgba(255,255,255,.04); }
+    .r-table td.num { width: 1%; color: var(--faint); font: 10.5px var(--mono); }
+    .r-table td.link { color: #A5B4FC; }
+    .r-table td.empty { color: var(--faint); }
+    .r-how { margin: 10px 0 0; color: var(--faint); font: 11px/1.6 var(--mono); }
+
+    /* coach marks: one small hint at a time */
+    .coach { position: absolute; z-index: 20; max-width: 230px; padding: 7px 11px; border-radius: 9px; background: var(--violet); color: #fff;
+      font: 600 11.5px/1.35 var(--sans); box-shadow: 0 10px 26px -8px rgba(124,92,255,.75); pointer-events: none; animation: coach-in .2s ease-out; }
+    .coach::before { content: ""; position: absolute; left: var(--ax, 16px); width: 9px; height: 9px; background: inherit; transform: rotate(45deg); }
+    .coach[data-side="below"]::before { top: -4px; }
+    .coach[data-side="above"]::before { bottom: -4px; }
+    .coach[data-side="none"]::before { display: none; }
+    .coach .n { margin-right: 6px; opacity: .7; font-family: var(--mono); }
+    @keyframes coach-in { from { opacity: 0; transform: translateY(4px); } }
+    /* step 1 asks for attention: the hint bobs and the icon sends out a pulsing ring */
+    .coach.attn { animation: coach-in .2s ease-out, bob 1.1s ease-in-out .2s infinite; }
+    @keyframes bob { 50% { transform: translateY(5px); } }
+    .ext.attn::before, .ext.attn::after { content: ""; position: absolute; inset: 0; border-radius: 9px; pointer-events: none;
+      border: 2px solid var(--violet-2); animation: ring 1.6s ease-out infinite; }
+    .ext.attn::after { animation-delay: .8s; }
+    .ext.attn img { animation: nudge 1.6s ease-in-out infinite; }
+    @keyframes ring { from { opacity: .9; transform: scale(.85); } to { opacity: 0; transform: scale(1.5); } }
+    @keyframes nudge { 0%, 70%, 100% { transform: none; } 80% { transform: scale(1.18) rotate(-8deg); } 90% { transform: scale(1.1) rotate(6deg); } }
+
+    @media (max-width: 700px) {
+      .links a:not(.gh) { display: none; }
+      .tabstrip { gap: 10px; }
+      .tab { max-width: 150px; padding: 0 9px; }
+      .results { padding: 12px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation: none !important; transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <a class="brand" href="#"><img src="logo.svg" alt="">Scrape Pro</a>
+    <div class="links">
+      <div class="lang" role="group" aria-label="Language / Idioma"><button type="button" data-lang="en" aria-pressed="true">EN</button><button type="button" data-lang="es" aria-pressed="false">ES</button></div>
+      <a href="https://github.com/alejandrocimentada/Scrape-Pro/blob/main/INSTALL.md" data-i18n="installGuide">Install guide</a>
+      <a class="gh" href="https://github.com/alejandrocimentada/Scrape-Pro">
+        <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+        GitHub
+      </a>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <h1 class="rise d1" data-i18n-html="headline">Turn any website<br><span class="grad">into a spreadsheet.</span></h1>
+    <p class="lead rise d2" data-i18n="lead">Point at the data or just ask for it. Scrape Pro's AI finds the pattern, reads the real values from the page, and hands you a clean table for Excel, JSON, or a ready-to-run Python scraper.</p>
+    <div class="cta rise d3">
+      <a class="btn btn-light" href="https://github.com/alejandrocimentada/Scrape-Pro/releases/latest/download/scrape-pro.zip">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 1.5v9M4.5 7 8 10.5 11.5 7M2.5 13.5h11"/></svg>
+        <span data-i18n="download">Download for Chrome</span>
+      </a>
+      <a class="btn btn-dark" href="https://github.com/alejandrocimentada/Scrape-Pro">
+        <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+        GitHub
+      </a>
+    </div>
+    <p class="fine rise d4">
+      <span data-i18n="fine">Free · Chrome, Edge &amp; Brave · Works with Claude, OpenAI, Gemini, OpenRouter, Ollama and more ·</span>
+      <a href="https://github.com/alejandrocimentada/Scrape-Pro/blob/main/INSTALL.md" data-i18n="installGuide">Install guide</a>
+    </p>
+  </header>
+
+  <!-- Interactive demo. The AI step is simulated (demo.js); every value in the table is read from this mock page. -->
+  <section class="stage" aria-label="Interactive demo">
+    <p class="demo-caption">
+      <span data-i18n="caption">Interactive demo · the AI step is simulated on this page. Your data never leaves your browser. ·</span>
+      <button class="demo-reset" id="demoReset" type="button" data-i18n="reset">Reset demo</button>
+    </p>
+    <div class="frame">
+      <div class="window" id="demo">
+        <div class="tabstrip">
+          <div class="dots"><i></i><i></i><i></i></div>
+          <div class="tabs" role="tablist" aria-label="Browser tabs">
+            <button class="tab active" id="tabPage" type="button" role="tab" aria-selected="true"><i class="fav"></i><span>supermarket.example/deals</span></button>
+            <button class="tab" id="tabResults" type="button" role="tab" aria-selected="false" hidden><img src="logo.svg" alt=""><span data-i18n="resultsTab">Scrape Pro · results</span></button>
+          </div>
+        </div>
+        <div class="toolbar">
+          <div class="url" id="url">supermarket.example<b>/deals</b></div>
+          <button class="ext" id="ext" type="button" aria-pressed="false" title="Scrape Pro: turn the picker on or off">
+            <img src="logo.svg" alt="Scrape Pro"><span class="badge" hidden>ON</span>
+          </button>
+        </div>
+        <div class="viewport">
+          <div class="page" id="page">
+            <div class="shop">
+              <div class="shop-head"><h2 data-i18n="shopTitle">Deals this week</h2><p data-i18n="shopMeta">8 products · prices in RD$</p></div>
+              <div class="grid">
+                <a class="product" href="https://supermarket.example/p/1042"><div class="img g1" data-image="image-1042"></div><span class="name" data-i18n="p1042">Ground coffee</span><span class="size">1 lb</span><span class="price">RD$ 245.00</span><span class="stock" data-i18n="inStock">In stock</span></a>
+                <a class="product" href="https://supermarket.example/p/1043"><div class="img g2" data-image="image-1043"></div><span class="name" data-i18n="p1043">Rice</span><span class="size">5 lb</span><span class="price">RD$ 189.00</span><span class="stock" data-i18n="inStock">In stock</span></a>
+                <a class="product" href="https://supermarket.example/p/1044"><div class="img g3" data-image="image-1044"></div><span class="name" data-i18n="p1044">Olive oil</span><span class="size">500 ml</span><span class="price">RD$ 410.00</span><span class="stock" data-i18n="inStock">In stock</span></a>
+                <a class="product" href="https://supermarket.example/p/1045"><div class="img g4" data-image="image-1045"></div><span class="name" data-i18n="p1045">Pasta</span><span class="size">1 lb</span><span class="price">RD$ 62.00</span><span class="stock out" data-i18n="outOfStock">Out of stock</span></a>
+                <a class="product" href="https://supermarket.example/p/1046"><div class="img g5" data-image="image-1046"></div><span class="name" data-i18n="p1046">Oat milk</span><span class="size">1 L</span><span class="price">RD$ 155.00</span><span class="stock" data-i18n="inStock">In stock</span></a>
+                <a class="product" href="https://supermarket.example/p/1047"><div class="img g6" data-image="image-1047"></div><span class="name" data-i18n="p1047">Black beans</span><span class="size">15 oz</span><span class="price">RD$ 58.00</span><span class="stock" data-i18n="inStock">In stock</span></a>
+                <a class="product" href="https://supermarket.example/p/1048"><div class="img g7" data-image="image-1048"></div><span class="name" data-i18n="p1048">Cheddar cheese</span><span class="size">8 oz</span><span class="price">RD$ 320.00</span><span class="stock" data-i18n="inStock">In stock</span></a>
+                <a class="product" href="https://supermarket.example/p/1049"><div class="img g8" data-image="image-1049"></div><span class="name" data-i18n="p1049">Orange juice</span><span class="size">1 L</span><span class="price">RD$ 97.00</span><span class="stock out" data-i18n="outOfStock">Out of stock</span></a>
+              </div>
+            </div>
+          </div>
+          <div class="results" id="results" hidden></div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <script src="i18n.js"></script>
+  <script src="demo.js"></script>
+</body>
+</html>

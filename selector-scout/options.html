@@ -1,0 +1,121 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Scrape Pro</title>
+  <style>
+    :root { color-scheme: dark; }
+    [hidden] { display: none !important; }
+    body { margin: 0; background: #0B0D12; color: #E6E8EE; font: 14px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+    main { max-width: 560px; margin: 48px auto; padding: 0 20px; }
+    h1 { margin: 0 0 4px; font-size: 22px; }
+    .brand { display: flex; align-items: center; gap: 10px; }
+    .mark { flex: none; width: 24px; height: 24px; }
+    .lead { margin: 0 0 24px; color: #9AA0AE; }
+    .card { margin-bottom: 16px; padding: 18px 20px; border-radius: 14px; background: #11131A; border: 1px solid rgba(255,255,255,.08); }
+    h2 { margin: 0 0 12px; font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: #9AA0AE; }
+    .choices { display: flex; gap: 16px; flex-wrap: wrap; }
+    .choices label { display: flex; gap: 6px; align-items: center; cursor: pointer; }
+    .field { display: block; margin-bottom: 14px; }
+    .field > span { display: block; margin-bottom: 6px; font-size: 13px; color: #C9CDD6; }
+    .inline { display: flex; gap: 8px; }
+    input[type=password], input[type=text], select { flex: 1; width: 100%; box-sizing: border-box; padding: 9px 11px; border-radius: 8px;
+      background: #0B0D12; color: #E6E8EE; border: 1px solid rgba(255,255,255,.12); font: 13px ui-monospace, Menlo, Consolas, monospace; }
+    select { font-family: system-ui, sans-serif; }
+    button { padding: 9px 14px; border: none; border-radius: 8px; background: #232735; color: #E6E8EE; font: 600 13px system-ui, sans-serif; cursor: pointer; }
+    #save { background: linear-gradient(135deg, #7C5CFF, #A78BFA); color: #fff; }
+    .note { margin: 4px 0 0; font-size: 12px; color: #9AA0AE; }
+    #providerNote { margin: -6px 0 12px; color: #C4B5FD; }
+    .actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    #status { font-size: 13px; color: #4ADE80; }
+    #status.err { color: #FCA5A5; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1 class="brand">
+      <svg class="mark" viewBox="0 0 128 128" aria-hidden="true">
+        <defs>
+          <linearGradient id="sp-grad" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#6D4AFF" /><stop offset="1" stop-color="#A78BFA" />
+          </linearGradient>
+        </defs>
+        <rect width="128" height="128" rx="33.28" fill="url(#sp-grad)" />
+        <g fill="#fff">
+          <rect x="25.6" y="34.56" width="49.15" height="12.8" rx="6.4" />
+          <rect x="25.6" y="55.04" width="36.86" height="12.8" rx="6.4" />
+          <rect x="25.6" y="75.52" width="42.6" height="12.8" rx="6.4" />
+          <path d="M71.68 64V115.2L86.02 101.89L106.5 100.86Z" stroke="#3B1FB0" stroke-width="5.76" stroke-linejoin="round" paint-order="stroke" />
+        </g>
+      </svg>
+      Scrape Pro
+    </h1>
+    <p class="lead" data-i18n="optionsLead"></p>
+
+    <section class="card">
+      <h2 data-i18n="languageSection"></h2>
+      <div class="field">
+        <span data-i18n="interfaceLanguage"></span>
+        <div class="choices">
+          <label><input type="radio" name="uiLang" value="auto" /> <span data-i18n="langAuto"></span></label>
+          <label><input type="radio" name="uiLang" value="en" /> English</label>
+          <label><input type="radio" name="uiLang" value="es" /> Español</label>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2 data-i18n="aiProvider"></h2>
+      <label class="field">
+        <span data-i18n="provider"></span>
+        <select id="provider"></select>
+      </label>
+      <p class="note" id="providerNote"></p>
+      <label class="field" id="baseUrlField" hidden>
+        <span data-i18n="endpointUrl"></span>
+        <input id="baseUrl" type="text" placeholder="https://your-server.com/v1/chat/completions" spellcheck="false" />
+      </label>
+      <label class="field" id="keyField">
+        <span data-i18n="apiKey"></span>
+        <div class="inline">
+          <input id="apiKey" type="password" autocomplete="off" spellcheck="false" />
+          <button id="reveal" type="button"></button>
+        </div>
+      </label>
+      <label class="field">
+        <span data-i18n="modelId"></span>
+        <input id="model" type="text" spellcheck="false" />
+      </label>
+      <p class="note" data-i18n="keysNote"></p>
+    </section>
+
+    <section class="card">
+      <h2 data-i18n="pickerSection"></h2>
+      <div class="field">
+        <span data-i18n="selectorFormat"></span>
+        <div class="choices">
+          <label><input type="radio" name="format" value="css" /> CSS</label>
+          <label><input type="radio" name="format" value="xpath" /> XPath</label>
+          <label><input type="radio" name="format" value="both" /> <span data-i18n="both"></span></label>
+        </div>
+      </div>
+      <div class="field">
+        <span data-i18n="defaultScraperLang"></span>
+        <div class="choices">
+          <label><input type="radio" name="lang" value="python" /> Python + BeautifulSoup</label>
+          <label><input type="radio" name="lang" value="puppeteer" /> Node + Puppeteer</label>
+        </div>
+      </div>
+    </section>
+
+    <div class="actions">
+      <button id="save" data-i18n="save"></button>
+      <button id="test" type="button" data-i18n="testConnection"></button>
+      <span id="status"></span>
+    </div>
+  </main>
+  <script src="providers.js"></script>
+  <script src="i18n.js"></script>
+  <script src="options.js"></script>
+</body>
+</html>

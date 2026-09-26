@@ -1,0 +1,93 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Extracted data</title>
+  <style>
+    :root { color-scheme: dark; --bg: #0B0D12; --panel: #11131A; --line: rgba(255,255,255,.08);
+      --text: #E6E8EE; --muted: #9AA0AE; --faint: #6B7180; --accent: #7C5CFF; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--text); font: 13px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+    main { max-width: 1280px; margin: 0 auto; padding: 28px 24px 48px; }
+    .brand { display: flex; align-items: center; gap: 10px; }
+    .mark { flex: none; width: 24px; height: 24px; }
+    .kicker { margin: 0; font: 600 11px ui-monospace, Menlo, Consolas, monospace; text-transform: uppercase; letter-spacing: .08em; color: #A78BFA; }
+    h1 { margin: 6px 0 4px; font-size: 22px; letter-spacing: -.01em; }
+    .meta { margin: 0; color: var(--muted); }
+    .meta a { color: var(--muted); }
+    .request { margin: 12px 0 0; padding: 8px 12px; border-left: 2px solid var(--accent); border-radius: 0 8px 8px 0;
+      background: rgba(124,92,255,.08); color: #C9CDD6; }
+    .toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 22px 0 12px; }
+    .search { flex: 1; min-width: 200px; padding: 8px 12px; border-radius: 8px; background: var(--panel); color: var(--text);
+      border: 1px solid var(--line); font: inherit; }
+    .btn { padding: 8px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); color: var(--text);
+      font: 600 12px system-ui, sans-serif; cursor: pointer; white-space: nowrap; }
+    .btn:hover { background: #1A1D27; }
+    .btn.primary { border: none; color: #fff; background: linear-gradient(135deg, #7C5CFF, #A78BFA); }
+    .btn.done { color: #4ADE80; }
+    .count { margin-bottom: 8px; color: var(--faint); font-size: 12px; }
+    .table-wrap { overflow: auto; max-height: calc(100vh - 260px); border: 1px solid var(--line); border-radius: 12px; background: var(--panel); }
+    table { width: 100%; border-collapse: separate; border-spacing: 0; }
+    th { position: sticky; top: 0; z-index: 1; padding: 10px 12px; text-align: left; white-space: nowrap; cursor: pointer; user-select: none;
+      background: #151823; color: var(--muted); border-bottom: 1px solid var(--line);
+      font: 600 11px ui-monospace, Menlo, Consolas, monospace; text-transform: uppercase; letter-spacing: .04em; }
+    th:hover { color: var(--text); }
+    th .dir { margin-left: 4px; color: #A78BFA; }
+    td { max-width: 380px; padding: 9px 12px; vertical-align: top; border-bottom: 1px solid rgba(255,255,255,.04);
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    td.num { width: 1%; color: var(--faint); font: 11px ui-monospace, Menlo, Consolas, monospace; }
+    td a { color: #A5B4FC; }
+    td.empty-cell { color: var(--faint); }
+    tr:hover td { background: rgba(124,92,255,.06); }
+    details { margin-top: 20px; color: var(--muted); }
+    summary { cursor: pointer; font-weight: 600; }
+    .recipe { margin-top: 10px; padding: 12px; border-radius: 10px; background: var(--panel); border: 1px solid var(--line);
+      font: 12px/1.7 ui-monospace, Menlo, Consolas, monospace; white-space: pre-wrap; color: #C9CDD6; }
+    .empty { padding: 60px; text-align: center; color: var(--muted); }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="brand">
+      <svg class="mark" viewBox="0 0 128 128" aria-hidden="true">
+        <defs>
+          <linearGradient id="sp-grad" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#6D4AFF" /><stop offset="1" stop-color="#A78BFA" />
+          </linearGradient>
+        </defs>
+        <rect width="128" height="128" rx="33.28" fill="url(#sp-grad)" />
+        <g fill="#fff">
+          <rect x="25.6" y="34.56" width="49.15" height="12.8" rx="6.4" />
+          <rect x="25.6" y="55.04" width="36.86" height="12.8" rx="6.4" />
+          <rect x="25.6" y="75.52" width="42.6" height="12.8" rx="6.4" />
+          <path d="M71.68 64V115.2L86.02 101.89L106.5 100.86Z" stroke="#3B1FB0" stroke-width="5.76" stroke-linejoin="round" paint-order="stroke" />
+        </g>
+      </svg>
+      <p class="kicker" data-i18n="resultsKicker"></p>
+    </div>
+    <h1 id="title" data-i18n="loading"></h1>
+    <p class="meta" id="meta"></p>
+    <p class="request" id="request" hidden></p>
+
+    <div class="toolbar">
+      <input id="search" class="search" type="search" data-i18n-placeholder="filterRows">
+      <button id="csv" class="btn primary" data-i18n="exportCsv"></button>
+      <button id="tsv" class="btn" data-i18n="copySheets"></button>
+      <button id="json" class="btn" data-i18n="exportJson"></button>
+      <button id="py" class="btn" data-i18n="exportPy"></button>
+    </div>
+
+    <div class="count" id="count"></div>
+    <div class="table-wrap">
+      <table><thead id="thead"></thead><tbody id="tbody"></tbody></table>
+    </div>
+
+    <details>
+      <summary data-i18n="howExtracted"></summary>
+      <div class="recipe" id="recipe"></div>
+    </details>
+  </main>
+  <script src="i18n.js"></script>
+  <script src="results.js"></script>
+</body>
+</html>

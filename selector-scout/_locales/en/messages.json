@@ -1,0 +1,10 @@
+{
+  "extName": {
+    "message": "Scrape Pro",
+    "description": "Extension name. Keep it as is in every language."
+  },
+  "extDescription": {
+    "message": "Point, click, and turn any website's data into a table with AI. Export to Excel/CSV or get a ready-to-run scraper.",
+    "description": "Shown on chrome://extensions and the Web Store. Max 132 characters."
+  }
+}

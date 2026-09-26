@@ -1,0 +1,9 @@
+node_modules/
+dist/
+*.zip
+Thumbs.db
+.DS_Store
+
+# Your own exports and one-off scripts stay on your computer
+*.csv
+/scrape.py

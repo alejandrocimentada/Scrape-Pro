@@ -1,0 +1,67 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <svg class="logo" viewBox="0 0 128 128" aria-hidden="true">
+        <defs>
+          <linearGradient id="sp-grad" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#6D4AFF" /><stop offset="1" stop-color="#A78BFA" />
+          </linearGradient>
+        </defs>
+        <rect width="128" height="128" rx="33.28" fill="url(#sp-grad)" />
+        <g fill="#fff">
+          <rect x="25.6" y="34.56" width="49.15" height="12.8" rx="6.4" />
+          <rect x="25.6" y="55.04" width="36.86" height="12.8" rx="6.4" />
+          <rect x="25.6" y="75.52" width="42.6" height="12.8" rx="6.4" />
+          <path d="M71.68 64V115.2L86.02 101.89L106.5 100.86Z" stroke="#3B1FB0" stroke-width="5.76" stroke-linejoin="round" paint-order="stroke" />
+        </g>
+      </svg>
+      <div>
+        <h1>Scrape Pro</h1>
+        <p class="version" id="version"></p>
+        <p class="sub" id="status"></p>
+      </div>
+    </div>
+    <button id="toggle" class="switch" role="switch" aria-checked="false" aria-label="Toggle picker">
+      <span class="knob"></span>
+    </button>
+  </header>
+
+  <div id="error" class="error" hidden></div>
+
+  <section class="ask">
+    <label for="askInput" data-i18n="askLabel"></label>
+    <textarea id="askInput" rows="2" data-i18n-placeholder="askPlaceholder"></textarea>
+    <button id="askBtn" class="ask-btn" data-i18n="extractTable"></button>
+    <p id="askStatus" class="ask-status" hidden></p>
+  </section>
+
+  <div class="bar">
+    <span class="hint">
+      <kbd id="shortcut" data-i18n-title="changeShortcut"></kbd> <span data-i18n="picker"></span> ·
+      <kbd>Esc</kbd> <span data-i18n="exit"></span>
+    </span>
+    <div class="seg" id="format">
+      <button data-format="css">CSS</button>
+      <button data-format="xpath">XPath</button>
+      <button data-format="both" data-i18n="both"></button>
+    </div>
+  </div>
+
+  <footer>
+    <button id="options" class="link" data-i18n="settingsLink"></button>
+    <div class="seg" id="uiLang" aria-label="Language">
+      <button data-lang="en">EN</button>
+      <button data-lang="es">ES</button>
+    </div>
+  </footer>
+
+  <script src="i18n.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>
