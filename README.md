@@ -21,7 +21,7 @@
 - **Pick or ask.** Click an element (Ctrl/Cmd+click for several), or describe what you want in the popup.
 - **Real values, not AI guesses.** The AI only chooses selectors; every value in the table is read from the live page.
 - **Results table.** Sort, filter, and export to Excel/CSV, copy for Google Sheets, JSON, or a Python script that repeats the extraction.
-- **Scraper code.** A ready-to-run Python (BeautifulSoup) or Node (Puppeteer) script for any element.
+- **Scraper code.** A ready-to-run Python script (requests + BeautifulSoup) for any element.
 - **Any AI provider.** Anthropic, OpenAI, Gemini, OpenRouter, Groq, Mistral, DeepSeek, xAI, ZenMux, Ollama (local), or any OpenAI-compatible server. Chrome asks permission for only the provider you choose.
 - **English / Español** throughout.
 

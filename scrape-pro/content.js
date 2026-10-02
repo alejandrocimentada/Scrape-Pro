@@ -253,8 +253,6 @@
     .ai { margin-top: 4px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,.08); }
     .ai-label { margin-bottom: 6px; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: #9AA0AE; }
     .ai-row { display: flex; gap: 6px; }
-    .select { cursor: pointer; padding: 0 8px; min-height: 32px; border-radius: 8px; background: #0B0D12; color: #E6E8EE;
-      border: 1px solid rgba(255,255,255,.1); font: 12px system-ui, sans-serif; }
     .ai-out { margin-top: 10px; border-radius: 10px; overflow: hidden; background: #0B0D12; border: 1px solid rgba(255,255,255,.08); }
     .ai-bar { display: flex; justify-content: space-between; align-items: center; padding: 6px 6px 6px 10px; color: #9AA0AE;
       font: 11px ui-monospace, Menlo, Consolas, monospace; border-bottom: 1px solid rgba(255,255,255,.06); }
@@ -319,7 +317,7 @@
   let addMode = false;  // touch screens have no Ctrl: the card's "+ Add more" toggle stands in for it
   let anchor = { x: 0, y: 0 };
   let raf = 0;
-  let settings = { format: 'both', snippetLang: 'python', showDetails: false };
+  let settings = { format: 'both', showDetails: false };
   const selectBoxes = [];
   const touchScreen = matchMedia('(any-pointer: coarse)').matches;
 
@@ -521,14 +519,10 @@
     askInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') extractBtn.click(); });
 
     // Scraper code
-    const langSelect = h('select', { class: 'select', 'aria-label': t('scraperCode') },
-      h('option', { value: 'python', text: 'Python · BeautifulSoup' }),
-      h('option', { value: 'puppeteer', text: 'Node · Puppeteer' }));
-    langSelect.value = settings.snippetLang;
     const output = h('div', { class: 'ai-out' });
     output.hidden = true;
     const genBtn = h('button', { class: 'btn alt', text: t('generateCode') });
-    genBtn.addEventListener('click', () => generate(langSelect.value, genBtn, output));
+    genBtn.addEventListener('click', () => generate(genBtn, output));
 
     toast.replaceChildren(
       h('div', { class: 'head' },
@@ -545,7 +539,7 @@
         extractMsg),
       h('div', { class: 'ai' },
         h('div', { class: 'ai-label', text: t('scraperCode') }),
-        h('div', { class: 'ai-row' }, langSelect, genBtn),
+        h('div', { class: 'ai-row' }, genBtn),
         output));
     toast.hidden = false;
     positionToast();
@@ -587,7 +581,7 @@
     positionToast();
   }
 
-  async function generate(lang, btn, output) {
+  async function generate(btn, output) {
     const target = current;
     if (!target) return;
     btn.disabled = true;
@@ -598,14 +592,14 @@
     try {
       const res = await send({
         type: 'GENERATE_SNIPPET',
-        payload: { outerHTML: target.el.outerHTML, css: target.css, xpath: target.xpath, url: location.href, lang },
+        payload: { outerHTML: target.el.outerHTML, css: target.css, xpath: target.xpath, url: location.href },
       });
       if (!res) throw new Error(t('lostConnection'));
       if (!res.ok) throw new Error(res.error);
       const copyBtn = h('button', { class: 'btn', text: t('copyCode') });
       copyBtn.addEventListener('click', () => copy(res.code, copyBtn));
       output.replaceChildren(
-        h('div', { class: 'ai-bar' }, h('span', { text: lang === 'python' ? 'scrape.py' : 'scrape.mjs' }), copyBtn),
+        h('div', { class: 'ai-bar' }, h('span', { text: 'scrape.py' }), copyBtn),
         h('pre', {}, h('code', { text: res.code })));
     } catch (err) {
       output.replaceChildren(h('div', { class: 'error', text: err.message }));

@@ -127,7 +127,7 @@ def main():
     soup = BeautifulSoup(response.content, "html.parser")
     items = soup.select(ITEM_SELECTOR) if ITEM_SELECTOR else [soup]
     if not items:
-        sys.exit("No items found. If this page is built with JavaScript, requests can't see it; use Puppeteer or Playwright instead.")
+        sys.exit("No items found. If this page is built with JavaScript, requests can't see it; use a headless browser such as Playwright instead.")
 
     rows = [{name: read(item, sel, attr, pat) for name, sel, attr, pat in FIELDS} for item in items]
     with open("results.csv", "w", newline="", encoding="utf-8-sig") as f:

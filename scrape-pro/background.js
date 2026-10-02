@@ -76,7 +76,10 @@ async function paintIcon(tabId = null, active = false) {
   await chrome.action.setTitle({ ...scope, title: active ? 'Scrape Pro: ON' : 'Scrape Pro' });
 }
 
-chrome.runtime.onInstalled.addListener(() => paintIcon());
+chrome.runtime.onInstalled.addListener(() => {
+  paintIcon();
+  chrome.storage.sync.remove('snippetLang').catch(() => {}); // pre-1.3.1 scraper language choice; scrapers are Python only now
+});
 chrome.runtime.onStartup.addListener(() => paintIcon());
 
 /* ───────────────────────── Picker on/off ───────────────────────── */
@@ -183,22 +186,14 @@ Requirements:
 - Print results as pretty JSON.
 - Keep it short and idiomatic, with brief comments only where they help.`;
 
-const LANGS = {
-  python: {
-    label: 'Python 3 with requests + BeautifulSoup (bs4)',
-    rules: `- First line: # pip install requests beautifulsoup4
+// Generated scrapers are Python only
+const PYTHON = {
+  label: 'Python 3 with requests + BeautifulSoup (bs4)',
+  rules: `- First line: # pip install requests beautifulsoup4
 - Use requests with a realistic desktop User-Agent, timeout=20, and raise_for_status().
 - Decode correctly: parse with BeautifulSoup(response.content, "html.parser") (bytes, not response.text) so the page's declared charset is respected and symbols like £ don't turn into "Â£".
 - Locate with soup.select_one(CSS_SELECTOR).
-- Add a short comment: if the content is rendered by JavaScript, requests will not see it, so use the Puppeteer version instead.`,
-  },
-  puppeteer: {
-    label: 'Node.js (ES modules) with Puppeteer',
-    rules: `- First line: // npm i puppeteer   (run with: node scrape.mjs)
-- import puppeteer from "puppeteer"; launch headless; page.goto(URL, { waitUntil: "networkidle2" }).
-- await page.waitForSelector(CSS_SELECTOR, { timeout: 15000 }), then extract with page.$eval / page.$$eval.
-- Always close the browser in a finally block.`,
-  },
+- Add a short comment: if the content is rendered by JavaScript, requests will not see it, so a headless browser (e.g. Playwright for Python) is needed instead.`,
 };
 
 function cleanHtml(html, max = 12000) {
@@ -211,8 +206,8 @@ function cleanHtml(html, max = 12000) {
     : { html: out, truncated: false };
 }
 
-function buildUserPrompt({ outerHTML, css, xpath, url, lang }) {
-  const spec = LANGS[lang] || LANGS.python;
+function buildUserPrompt({ outerHTML, css, xpath, url }) {
+  const spec = PYTHON;
   const { html, truncated } = cleanHtml(outerHTML);
   return `Target: ${spec.label}
 Language-specific rules:

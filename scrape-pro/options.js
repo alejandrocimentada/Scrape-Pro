@@ -45,7 +45,7 @@ function renderLanguage() {
 
 async function load() {
   await ssI18n.init();
-  const sync = await chrome.storage.sync.get({ format: 'both', snippetLang: 'python', uiLang: 'auto' });
+  const sync = await chrome.storage.sync.get({ format: 'both', uiLang: 'auto' });
   const s = await chrome.storage.local.get({ provider: 'zenmux', keys: {}, models: {}, baseUrl: '', apiKey: '', model: '' });
   // Carry over settings saved by older versions (a single ZenMux key and model)
   if (s.apiKey && !s.keys.zenmux) s.keys.zenmux = s.apiKey;
@@ -53,7 +53,6 @@ async function load() {
   state = s;
 
   document.querySelector(`input[name="format"][value="${sync.format}"]`).checked = true;
-  document.querySelector(`input[name="lang"][value="${sync.snippetLang}"]`).checked = true;
   document.querySelector(`input[name="uiLang"][value="${sync.uiLang}"]`).checked = true;
 
   const select = $('provider');
@@ -87,7 +86,6 @@ function persist(onSaved) {
     await chrome.storage.local.set({ provider: id, keys: state.keys, models: state.models, baseUrl: state.baseUrl });
     await chrome.storage.sync.set({
       format: document.querySelector('input[name="format"]:checked').value,
-      snippetLang: document.querySelector('input[name="lang"]:checked').value,
     });
     onSaved();
   });
