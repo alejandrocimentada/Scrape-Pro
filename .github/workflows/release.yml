@@ -16,7 +16,7 @@ jobs:
 
       - name: Check that the tag matches manifest.json
         run: |
-          version="$(jq -r .version selector-scout/manifest.json)"
+          version="$(jq -r .version scrape-pro/manifest.json)"
           if [ "$GITHUB_REF_NAME" != "v$version" ]; then
             echo "::error::Tag $GITHUB_REF_NAME does not match manifest.json version $version"
             exit 1
@@ -24,7 +24,7 @@ jobs:
 
       - name: Zip the extension (manifest.json at the top level)
         run: |
-          cd selector-scout
+          cd scrape-pro
           zip -r -X ../scrape-pro.zip . -x '.*'
           cd ..
           unzip -l scrape-pro.zip

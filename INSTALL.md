@@ -89,11 +89,11 @@ Still stuck? [Open an issue](https://github.com/alejandrocimentada/Scrape-Pro/is
 
 ## For maintainers: publishing a release
 
-1. Set the new version in `selector-scout/manifest.json` and commit it.
+1. Set the new version in `scrape-pro/manifest.json` and commit it.
 2. Tag the commit with the same version and push the tag:
    ```
    git tag v1.3.0
    git push origin v1.3.0
    ```
-3. The **Release** workflow (`.github/workflows/release.yml`) checks that the tag matches `manifest.json`, zips the **contents** of `selector-scout/` as `scrape-pro.zip` (so `manifest.json` is at the top level), and publishes the release.
+3. The **Release** workflow (`.github/workflows/release.yml`) checks that the tag matches `manifest.json`, zips the **contents** of `scrape-pro/` as `scrape-pro.zip` (so `manifest.json` is at the top level), and publishes the release.
 4. The website's download button always points to `releases/latest/download/scrape-pro.zip`, so it updates automatically.

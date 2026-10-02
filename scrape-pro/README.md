@@ -19,7 +19,7 @@ A lightweight Chrome extension (Manifest V3, vanilla JS, zero dependencies) for 
 ## Install (developer mode)
 1. Download or clone this folder.
 2. Open `chrome://extensions` and enable **Developer mode** (top right).
-3. Click **Load unpacked** and select the `selector-scout` folder.
+3. Click **Load unpacked** and select the `scrape-pro` folder.
 4. Pin the extension from the puzzle-piece menu.
 5. Open **Options**, choose an AI provider, enter its API key and model ID, and click **Save** (or **Test connection**). Chrome asks permission to reach that one provider's server.
 
@@ -61,4 +61,4 @@ The path climbs toward `<html>` only until the selector matches exactly one elem
 - API keys live in local extension storage, which is fine for personal use. A production version should proxy requests through a backend.
 
 ## Changelog
-- **1.3.0**: renamed from Selector Scout to Scrape Pro, with a new logo and icon set. Settings and API keys carry over; the folder is still `selector-scout`.
+- **1.3.0**: renamed from Selector Scout to Scrape Pro, with a new logo and icon set. Settings and API keys carry over.

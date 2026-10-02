@@ -13,7 +13,7 @@
   <a href="https://github.com/alejandrocimentada/Scrape-Pro/releases/latest"><b>Download</b></a> ·
   <a href="INSTALL.md">Install guide</a> ·
   <a href="https://alejandrocimentada.github.io/Scrape-Pro/">Website &amp; interactive demo</a> ·
-  <a href="selector-scout/README.md">Extension docs</a>
+  <a href="scrape-pro/README.md">Extension docs</a>
 </p>
 
 ## Features
@@ -29,11 +29,11 @@
 
 | Folder | What it is |
 |---|---|
-| `selector-scout/` | The Chrome extension (Manifest V3, vanilla JS, no dependencies). Load this folder unpacked. The folder keeps its original name so existing installs keep their settings. |
+| `scrape-pro/` | The Chrome extension (Manifest V3, vanilla JS, no dependencies). Load this folder unpacked. |
 | `docs/` | The website, served by GitHub Pages, with an interactive demo of the extension. |
 
 ## Install
 
 Download **scrape-pro.zip** from the [latest release](https://github.com/alejandrocimentada/Scrape-Pro/releases/latest) and follow the [install guide](INSTALL.md) (about 3 minutes, using Chrome's Developer mode).
 
-Working from a clone instead? On `chrome://extensions`, turn on **Developer mode**, click **Load unpacked**, and select the `selector-scout` folder.
+Working from a clone instead? On `chrome://extensions`, turn on **Developer mode**, click **Load unpacked**, and select the `scrape-pro` folder.
